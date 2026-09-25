@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.itops.modules.ticket.mapper.TicketMapper">
+
+    <resultMap id="ticketPageMap" type="com.itops.modules.ticket.entity.Ticket">
+        <id property="ticketId" column="ticket_id"/>
+        <result property="ticketNo" column="ticket_no"/>
+        <result property="title" column="title"/>
+        <result property="categoryId" column="category_id"/>
+        <result property="categoryName" column="category_name"/>
+        <result property="description" column="description"/>
+        <result property="reporterId" column="reporter_id"/>
+        <result property="reporterName" column="reporter_name"/>
+        <result property="deptId" column="dept_id"/>
+        <result property="deptName" column="dept_name"/>
+        <result property="phone" column="phone"/>
+        <result property="source" column="source"/>
+        <result property="priority" column="priority"/>
+        <result property="status" column="status"/>
+        <result property="locationId" column="location_id"/>
+        <result property="locationText" column="location_text"/>
+        <result property="longitude" column="longitude"/>
+        <result property="latitude" column="latitude"/>
+        <result property="assetId" column="asset_id"/>
+        <result property="assetName" column="asset_name"/>
+        <result property="handlerId" column="handler_id"/>
+        <result property="handlerName" column="handler_name"/>
+        <result property="suspendReason" column="suspend_reason"/>
+        <result property="handleSummary" column="handle_summary"/>
+        <result property="solution" column="solution"/>
+        <result property="satisfaction" column="satisfaction"/>
+        <result property="mergedTo" column="merged_to"/>
+        <result property="assignTime" column="assign_time"/>
+        <result property="acceptTime" column="accept_time"/>
+        <result property="suspendTime" column="suspend_time"/>
+        <result property="resolveTime" column="resolve_time"/>
+        <result property="closeTime" column="close_time"/>
+        <result property="finishTime" column="finish_time"/>
+        <result property="durationSeconds" column="duration_seconds"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+    </resultMap>
+
+    <select id="selectTicketPage" resultMap="ticketPageMap">
+        SELECT t.*,
+               c.category_name,
+               d.dept_name,
+               a.asset_name
+        FROM biz_ticket t
+        LEFT JOIN biz_category c ON c.category_id = t.category_id
+        LEFT JOIN sys_dept d     ON d.dept_id = t.dept_id
+        LEFT JOIN biz_asset a    ON a.asset_id = t.asset_id
+        <where>
+            t.deleted = 0
+            <if test="q.keyword != null and q.keyword != ''">
+                AND (t.ticket_no LIKE CONCAT('%', #{q.keyword}, '%')
+                     OR t.title LIKE CONCAT('%', #{q.keyword}, '%'))
+            </if>
+            <if test="q.categoryId != null">
+                AND (t.category_id = #{q.categoryId}
+                     OR c.ancestors LIKE CONCAT('%,', #{q.categoryId}, ',%')
+                     OR c.ancestors LIKE CONCAT('%,', #{q.categoryId}))
+            </if>
+            <if test="q.status != null and q.status != ''">
+                AND t.status = #{q.status}
+            </if>
+            <if test="q.priority != null">
+                AND t.priority = #{q.priority}
+            </if>
+            <if test="q.source != null and q.source != ''">
+                AND t.source = #{q.source}
+            </if>
+            <if test="q.deptId != null">
+                AND t.dept_id = #{q.deptId}
+            </if>
+            <if test="q.handlerId != null">
+                AND t.handler_id = #{q.handlerId}
+            </if>
+            <if test="q.reporterId != null">
+                AND t.reporter_id = #{q.reporterId}
+            </if>
+            <if test="q.beginTime != null">
+                AND t.create_time &gt;= #{q.beginTime}
+            </if>
+            <if test="q.endTime != null">
+                AND t.create_time &lt;= #{q.endTime}
+            </if>
+            <!-- 移动端维度过滤 -->
+            <if test="q.dimension == 'created'">
+                AND t.reporter_id = #{currentUserId}
+            </if>
+            <if test="q.dimension == 'assigned'">
+                AND t.handler_id = #{currentUserId}
+                AND t.status NOT IN ('CLOSED','CANCELLED','MERGED')
+            </if>
+            <if test="q.dimension == 'collaborator'">
+                AND EXISTS (SELECT 1 FROM biz_ticket_collaborator tc
+                            WHERE tc.ticket_id = t.ticket_id AND tc.user_id = #{currentUserId})
+            </if>
+            <!-- 数据权限(由 @DataScope 切面生成, 内部可信) -->
+            ${dataScope}
+        </where>
+        ORDER BY t.ticket_id DESC
+    </select>
+
+    <select id="selectDetailById" resultMap="ticketPageMap">
+        SELECT t.*,
+               c.category_name,
+               d.dept_name,
+               a.asset_name
+        FROM biz_ticket t
+        LEFT JOIN biz_category c ON c.category_id = t.category_id
+        LEFT JOIN sys_dept d     ON d.dept_id = t.dept_id
+        LEFT JOIN biz_asset a    ON a.asset_id = t.asset_id
+        WHERE t.ticket_id = #{ticketId} AND t.deleted = 0
+    </select>
+</mapper>

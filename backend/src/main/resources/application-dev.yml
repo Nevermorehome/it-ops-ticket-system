@@ -1,0 +1,11 @@
+# 本地开发环境
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://${ITOPS_DB_HOST:localhost}:${ITOPS_DB_PORT:3306}/itops?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
+    username: ${ITOPS_DB_USER:root}
+    password: ${ITOPS_DB_PASSWORD:123456}
+
+itops:
+  upload:
+    path: ${ITOPS_UPLOAD_PATH:./data/uploads}

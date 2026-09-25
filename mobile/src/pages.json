@@ -1,0 +1,76 @@
+{
+  "easycom": {
+    "autoscan": true
+  },
+  "pages": [
+    {
+      "path": "pages/ticket/list",
+      "style": {
+        "navigationBarTitleText": "工单",
+        "enablePullDownRefresh": true
+      }
+    },
+    {
+      "path": "pages/message/list",
+      "style": {
+        "navigationBarTitleText": "消息"
+      }
+    },
+    {
+      "path": "pages/mine/index",
+      "style": {
+        "navigationBarTitleText": "我的"
+      }
+    },
+    {
+      "path": "pages/login/index",
+      "style": {
+        "navigationBarTitleText": "登录"
+      }
+    },
+    {
+      "path": "pages/ticket/create",
+      "style": {
+        "navigationBarTitleText": "新建工单"
+      }
+    },
+    {
+      "path": "pages/ticket/detail",
+      "style": {
+        "navigationBarTitleText": "工单详情"
+      }
+    },
+    {
+      "path": "pages/field/record",
+      "style": {
+        "navigationBarTitleText": "现场记录"
+      }
+    }
+  ],
+  "globalStyle": {
+    "navigationBarTextStyle": "white",
+    "navigationBarTitleText": "IT运维工单",
+    "navigationBarBackgroundColor": "#2b6cb0",
+    "backgroundColor": "#f4f5f7"
+  },
+  "tabBar": {
+    "color": "#909399",
+    "selectedColor": "#2b6cb0",
+    "borderStyle": "black",
+    "backgroundColor": "#ffffff",
+    "list": [
+      {
+        "pagePath": "pages/ticket/list",
+        "text": "工单"
+      },
+      {
+        "pagePath": "pages/message/list",
+        "text": "消息"
+      },
+      {
+        "pagePath": "pages/mine/index",
+        "text": "我的"
+      }
+    ]
+  }
+}

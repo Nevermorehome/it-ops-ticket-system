@@ -1,0 +1,78 @@
+server:
+  port: 8080
+  servlet:
+    encoding:
+      charset: UTF-8
+      force: true
+  tomcat:
+    uri-encoding: UTF-8
+
+spring:
+  profiles:
+    active: dev
+  application:
+    name: itops-backend
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: Asia/Shanghai
+    default-property-inclusion: non_null
+  servlet:
+    multipart:
+      max-file-size: 20MB
+      max-request-size: 100MB
+
+mybatis-plus:
+  mapper-locations: classpath*:mapper/**/*.xml
+  type-aliases-package: com.itops.modules.**.entity
+  configuration:
+    map-underscore-to-camel-case: true
+    cache-enabled: false
+    log-impl: org.apache.ibatis.logging.slf4j.Slf4jImpl
+  global-config:
+    banner: false
+    db-config:
+      id-type: auto
+      logic-delete-field: deleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+
+# 业务自定义配置
+itops:
+  jwt:
+    # HS512 密钥(生产环境请通过环境变量 ITOPS_JWT_SECRET 覆盖)
+    secret: itops-internal-workorder-jwt-secret-key-2026-must-be-long-enough-0123456789
+    # 令牌有效期(分钟) 默认 12 小时
+    expire-minutes: 720
+  upload:
+    # 存储根目录(容器内 /data/uploads)
+    path: ${ITOPS_UPLOAD_PATH:./data/uploads}
+    # 对外访问前缀
+    url-prefix: /uploads
+    max-size-mb: 10
+    allowed-types: jpg,jpeg,png,gif,webp,bmp,pdf,doc,docx,xls,xlsx
+  report:
+    # PDF 中文字体路径(docker 镜像内为 Noto Sans CJK)
+    font-path: ${ITOPS_FONT_PATH:/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc}
+    web-url: ${ITOPS_WEB_URL:http://localhost:8088}
+    h5-url: ${ITOPS_H5_URL:http://localhost:8088/h5}
+
+# 接口文档
+knife4j:
+  enable: true
+  setting:
+    language: zh_cn
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    tags-sorter: alpha
+  api-docs:
+    path: /v3/api-docs
+  group-configs:
+    - group: default
+      paths-to-match: /api/**
+      packages-to-scan: com.itops.modules
+
+logging:
+  level:
+    com.itops: info
+    org.springframework.security: info

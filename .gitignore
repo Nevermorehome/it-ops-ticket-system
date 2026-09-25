@@ -1,0 +1,49 @@
+# ========== 通用 / 操作系统 ==========
+.DS_Store
+Thumbs.db
+desktop.ini
+*.log
+*.tmp
+*.bak
+
+# ========== IDE / 编辑器 ==========
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+.hbuilderx/
+*.swp
+
+# ========== Java / Maven / Spring Boot ==========
+target/
+!.mvn/wrapper/maven-wrapper.jar
+*.class
+*.jar
+!**/maven-wrapper.jar
+# 本地上传文件与运行数据(不入库)
+backend/data/
+data/
+uploads/
+hs_err_pid*
+
+# ========== Node / 前端通用 ==========
+node_modules/
+dist/
+dist-ssr/
+*.local
+.env.local
+.env.*.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+package-lock.bak*
+
+# ========== UniApp ==========
+unpackage/
+.hbuilderx/
+
+# ========== 本地部署临时产物 ==========
+deploy/*.tar.gz
+*.sql.bak

@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.itops.modules.report.mapper.ReportMapper">
+
+    <select id="trendCreated" resultType="java.util.LinkedHashMap">
+        SELECT DATE_FORMAT(t.create_time, '%Y-%m-%d') AS name, COUNT(1) AS value
+        FROM biz_ticket t
+        WHERE t.deleted = 0
+          AND t.create_time &gt;= #{start} AND t.create_time &lt; #{end}
+        ${dataScope}
+        GROUP BY DATE_FORMAT(t.create_time, '%Y-%m-%d')
+        ORDER BY name
+    </select>
+
+    <select id="trendResolved" resultType="java.util.LinkedHashMap">
+        SELECT DATE_FORMAT(t.resolve_time, '%Y-%m-%d') AS name, COUNT(1) AS value
+        FROM biz_ticket t
+        WHERE t.deleted = 0
+          AND t.resolve_time IS NOT NULL
+          AND t.resolve_time &gt;= #{start} AND t.resolve_time &lt; #{end}
+        ${dataScope}
+        GROUP BY DATE_FORMAT(t.resolve_time, '%Y-%m-%d')
+        ORDER BY name
+    </select>
+
+    <select id="distribution" resultType="java.util.LinkedHashMap">
+        SELECT
+        <choose>
+            <when test="groupBy == 'category'">IFNULL(c.category_name, '未分类') AS name</when>
+            <when test="groupBy == 'priority'">
+                CASE t.priority WHEN 0 THEN '低' WHEN 1 THEN '中' WHEN 2 THEN '高' WHEN 3 THEN '紧急' ELSE '未知' END AS name
+            </when>
+            <when test="groupBy == 'source'">
+                CASE t.source WHEN 'phone' THEN '电话报修' WHEN 'wechat' THEN '微信/企微'
+                WHEN 'onsite' THEN '现场报障' WHEN 'self' THEN '自助提单' ELSE '其他' END AS name
+            </when>
+            <when test="groupBy == 'status'">
+                CASE t.status WHEN 'PENDING' THEN '待受理' WHEN 'ASSIGNED' THEN '已指派'
+                WHEN 'PROCESSING' THEN '处理中' WHEN 'SUSPENDED' THEN '已挂起'
+                WHEN 'RESOLVED' THEN '已解决' WHEN 'CLOSED' THEN '已关闭'
+                WHEN 'CANCELLED' THEN '已取消' WHEN 'MERGED' THEN '已合并' ELSE t.status END AS name
+            </when>
+            <otherwise>t.status AS name</otherwise>
+        </choose>
+        , COUNT(1) AS value
+        FROM biz_ticket t
+        LEFT JOIN biz_category c ON c.category_id = t.category_id
+        WHERE t.deleted = 0
+          AND t.create_time &gt;= #{start} AND t.create_time &lt; #{end}
+        ${dataScope}
+        GROUP BY name
+        ORDER BY value DESC
+    </select>
+
+    <select id="handlerRank" resultType="java.util.LinkedHashMap">
+        SELECT IFNULL(t.handler_name, '未指派') AS name,
+               COUNT(1) AS total,
+               SUM(CASE WHEN t.status IN ('RESOLVED','CLOSED') THEN 1 ELSE 0 END) AS resolved,
+               ROUND(IFNULL(AVG(CASE WHEN t.duration_seconds &gt; 0 THEN t.duration_seconds END), 0), 0) AS avgDuration
+        FROM biz_ticket t
+        WHERE t.deleted = 0
+          AND t.create_time &gt;= #{start} AND t.create_time &lt; #{end}
+        ${dataScope}
+        GROUP BY t.handler_id, t.handler_name
+        ORDER BY total DESC
+        LIMIT 20
+    </select>
+
+    <select id="deptStat" resultType="java.util.LinkedHashMap">
+        SELECT IFNULL(d.dept_name, '未分配部门') AS name, COUNT(1) AS value
+        FROM biz_ticket t
+        LEFT JOIN sys_dept d ON d.dept_id = t.dept_id
+        WHERE t.deleted = 0
+          AND t.create_time &gt;= #{start} AND t.create_time &lt; #{end}
+        ${dataScope}
+        GROUP BY t.dept_id, d.dept_name
+        ORDER BY value DESC
+    </select>
+
+    <select id="overview" resultType="java.util.LinkedHashMap">
+        SELECT
+            SUM(CASE WHEN t.create_time &gt;= #{start} AND t.create_time &lt; #{end} THEN 1 ELSE 0 END) AS created,
+            SUM(CASE WHEN t.resolve_time &gt;= #{start} AND t.resolve_time &lt; #{end} THEN 1 ELSE 0 END) AS resolved,
+            SUM(CASE WHEN t.close_time &gt;= #{start} AND t.close_time &lt; #{end} THEN 1 ELSE 0 END) AS closed,
+            SUM(CASE WHEN t.status = 'PENDING' THEN 1 ELSE 0 END) AS pending,
+            SUM(CASE WHEN t.status IN ('ASSIGNED','PROCESSING','SUSPENDED') THEN 1 ELSE 0 END) AS processing,
+            SUM(CASE WHEN t.status = 'SUSPENDED' THEN 1 ELSE 0 END) AS suspended
+        FROM biz_ticket t
+        WHERE t.deleted = 0
+        ${dataScope}
+    </select>
+
+    <select id="avgDuration" resultType="java.lang.Double">
+        SELECT ROUND(IFNULL(AVG(t.duration_seconds), 0), 0)
+        FROM biz_ticket t
+        WHERE t.deleted = 0
+          AND t.resolve_time IS NOT NULL
+          AND t.resolve_time &gt;= #{start} AND t.resolve_time &lt; #{end}
+          AND t.duration_seconds &gt; 0
+        ${dataScope}
+    </select>
+
+</mapper>
