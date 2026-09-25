@@ -1,11 +1,35 @@
-# 本地开发环境
+# 本地开发环境(敏感默认值仅存在于此文件, 不用于生产)
 spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://${ITOPS_DB_HOST:localhost}:${ITOPS_DB_PORT:3306}/itops?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
     username: ${ITOPS_DB_USER:root}
     password: ${ITOPS_DB_PASSWORD:123456}
+    hikari:
+      maximum-pool-size: 10
 
 itops:
+  jwt:
+    # 仅开发环境使用的内置密钥
+    secret: ${ITOPS_JWT_SECRET:itops-internal-workorder-jwt-secret-key-2026-must-be-long-enough-0123456789}
   upload:
     path: ${ITOPS_UPLOAD_PATH:./data/uploads}
+  cors:
+    # 开发态允许 Vite(5173/5174)等任意来源跨域
+    allowed-origins: ${ITOPS_CORS_ORIGINS:*}
+
+mybatis-plus:
+  configuration:
+    # 开发期打印 SQL
+    log-impl: org.apache.ibatis.logging.slf4j.Slf4jImpl
+
+# 开发环境开启接口文档
+knife4j:
+  enable: true
+  setting:
+    language: zh_cn
+
+logging:
+  level:
+    com.itops: debug
+    org.springframework.security: info

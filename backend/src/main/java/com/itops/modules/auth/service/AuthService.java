@@ -36,21 +36,29 @@ public class AuthService {
     private final SysUserService userService;
     private final SysMenuService menuService;
     private final SysLogService logService;
+    private final LoginAttemptService loginAttemptService;
 
     public Map<String, Object> login(LoginBody body, HttpServletRequest request) {
+        String clientIp = resolveIp(request);
+        // 防爆破: 锁定期内直接拒绝
+        loginAttemptService.checkLocked(body.getUsername(), clientIp);
+
         Authentication authentication;
         try {
             authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(body.getUsername(), body.getPassword()));
         } catch (Exception e) {
+            loginAttemptService.recordFailure(body.getUsername(), clientIp);
             recordLoginLog(body.getUsername(), request, "1", "账号或密码错误");
             throw new BusinessException(401, "账号或密码错误");
         }
         LoginUser loginUser = (LoginUser) authentication.getPrincipal();
         if (!loginUser.isEnabled()) {
+            loginAttemptService.recordFailure(body.getUsername(), clientIp);
             recordLoginLog(body.getUsername(), request, "1", "账号已停用");
             throw new BusinessException(401, "账号已停用，请联系管理员");
         }
+        loginAttemptService.recordSuccess(body.getUsername(), clientIp);
 
         String token = jwtUtils.createToken(loginUser.getUserId(), loginUser.getUsername());
         userService.updateLoginInfo(loginUser.getUserId(), resolveIp(request));

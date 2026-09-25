@@ -1,7 +1,7 @@
 # 信息部内部 IT 运维工单记录系统
 
 > 报修 → 派单 → 现场处理（GPS + 拍照水印）→ 解决关闭 → 统计分析 全流程闭环
-> Monorepo：Spring Boot 3 后端 · Vue3 管理后台 · UniApp 移动端(H5/Android APK) · Docker Compose 部署
+> Monorepo：Spring Boot 3 后端 · Vue3 管理后台 · UniApp 移动端(H5/Android APK) · Nginx 本地部署
 
 ## 目录结构
 
@@ -125,63 +125,102 @@ H5 下需 HTTPS 或 localhost 环境授权。
 
 ## 二、本地生产部署（不使用 Docker）
 
-> 本方案已在 Windows + JDK 21 + MySQL 8.0（root/123456）实测跑通全流程。
+> 已在 Windows + JDK 21 + MySQL 8.0 实测：构建、prod 启动、健康检查、登录限流、
+> 导出（Excel/Word/PDF）全流程通过。
+
+生产环境必须使用 **prod profile** 启动，该 profile 下：
+
+- 数据库密码、JWT 密钥**没有内置默认值**，缺失即拒绝启动（fail-fast）；
+- 禁止使用仓库内置的开发 JWT 密钥（启动校验，防止密钥随公开仓库泄露）；
+- 接口文档（Knife4j/Swagger）端点直接返回 401，不暴露任何接口结构；
+- CORS 默认不输出跨域头（前后端同域，经 Nginx 反代）；
+- 异常响应不含堆栈/SQL/内部信息；日志写入滚动文件；
+- 登录失败 5 次锁定 10 分钟（按 IP + 账号），阈值可配；
+- 开启 gzip、Hikari 连接池调优、`/actuator/health` 健康检查。
 
 ### 1. 准备数据库
 
 ```bash
-mysql --default-character-set=utf8mb4 -uroot -p123456 -e "source deploy/mysql/init.sql"
+mysql --default-character-set=utf8mb4 -uroot -p -e "source deploy/mysql/init.sql"
 ```
 
-### 2. 构建并启动后端（8080）
+### 2. 构建并以 prod profile 启动后端（8080）
 
 ```bash
 cd backend
 mvn clean package -DskipTests
-java -jar target/itops-backend.jar
-# 如需自定义数据库连接:
-# java -jar target/itops-backend.jar --ITOPS_DB_HOST=127.0.0.1 --ITOPS_DB_PASSWORD=你的密码
-# 或使用环境变量 ITOPS_DB_HOST / ITOPS_DB_PORT / ITOPS_DB_USER / ITOPS_DB_PASSWORD
+
+# Windows PowerShell
+$env:ITOPS_DB_HOST="127.0.0.1"
+$env:ITOPS_DB_USER="root"
+$env:ITOPS_DB_PASSWORD="你的强密码"
+$env:ITOPS_JWT_SECRET="至少64字节的随机字符串-建议用密码生成器生成并妥善保管-0123456789abcdef"
+$env:ITOPS_UPLOAD_PATH="D:/itops/uploads"
+java -jar target/itops-backend.jar --spring.profiles.active=prod
 ```
 
-### 3. 构建前端静态产物
+生成 JWT 密钥（任选）：
+
+```powershell
+# PowerShell：生成 64 字节(512bit)Base64 随机串
+$b = New-Object byte[] 64
+[Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($b)
+[Convert]::ToBase64String($b)
+```
+
+健康检查（无需认证）：`GET http://localhost:8080/actuator/health` → `{"status":"UP"}`
+
+> 上线后请**立即在管理后台修改 admin 默认密码**（admin/admin123 仅为种子账号）。
+
+### 3. 生产环境变量清单
+
+| 变量 | 必需 | 说明 |
+|---|---|---|
+| ITOPS_DB_HOST | ✅ | 数据库地址（prod 无默认值） |
+| ITOPS_DB_PORT / ITOPS_DB_NAME | 3306 / itops | 端口与库名 |
+| ITOPS_DB_USER / ITOPS_DB_PASSWORD | ✅ | 数据库账号密码（prod 无默认值） |
+| ITOPS_DB_POOL_MAX | 20 | Hikari 最大连接数 |
+| ITOPS_JWT_SECRET | ✅ | ≥64 字节随机串，禁止使用开发默认值 |
+| ITOPS_JWT_EXPIRE_MINUTES | 720 | 令牌有效期（分钟） |
+| ITOPS_UPLOAD_PATH | /data/uploads | 上传文件存储目录（需可写、定期备份） |
+| ITOPS_CORS_ORIGINS | 空 | 前端独立域名部署时配置，如 `https://ops.example.com`，逗号分隔 |
+| ITOPS_WEB_URL / ITOPS_H5_URL | 空 | Webhook 消息内的工单跳转链接 |
+| ITOPS_FONT_PATH | Noto Sans CJK 路径 | PDF 导出中文字体，Windows 可设 `C:/Windows/Fonts/simsun.ttc` |
+| ITOPS_LOGIN_MAX_FAIL / ITOPS_LOGIN_LOCK_MINUTES | 5 / 10 | 登录防爆破阈值与锁定时长 |
+| LOG_PATH | ./logs | 日志输出目录 |
+
+### 4. 构建前端静态产物
 
 ```bash
 cd admin-web && npm install && npm run build   # 产物 admin-web/dist
 cd mobile && npm install && npm run build:h5   # 产物 mobile/dist/build/h5
 ```
 
-### 4. 使用本地 Nginx 托管与反向代理（可选但推荐）
+### 5. 使用本地 Nginx 托管与反向代理（推荐）
 
 1. 安装 Nginx（Windows 下载解压版即可）；
 2. 将 [deploy/nginx/nginx.conf](deploy/nginx/nginx.conf) 放入 Nginx 的 `conf.d/`
    （或并入 `conf/nginx.conf` 的 http 块），并按实际路径修改其中两处：
    - `root D:/worklog/admin-web/dist;`（管理后台产物目录）
    - `alias D:/worklog/mobile/dist/build/h5/;`（移动端 H5 产物目录）
-3. 启动 Nginx 后访问：
+3. 建议为 Nginx 配置 HTTPS（证书可用 mkcert 内网测试或正式证书），443 对外、8080 仅监听本机；
+4. 启动后访问：
 
 | 入口 | 地址 |
 |---|---|
-| Web 管理后台 | <http://localhost/> |
-| 移动端 H5 | <http://localhost/mobile/> |
-| 后端 API（经 Nginx 转发） | <http://localhost/api/> |
-| 接口文档 | <http://localhost:8080/doc.html>（直连后端） |
+| Web 管理后台 | `https://你的域名/` |
+| 移动端 H5 | `https://你的域名/mobile/` |
+| 后端 API（经 Nginx 转发） | `https://你的域名/api/` |
 
 Nginx 配置已包含：`/api`、`/uploads` 反代到 `127.0.0.1:8080`、SPA history 路由
 fallback、gzip、`client_max_body_size 20m`。
 
-> 不装 Nginx 也可以：开发态直接用 `npm run dev`（5173）与 `npm run dev:h5`（5174），
-> 开发服务器已配置 `/api`、`/uploads` 代理到 8080。
+### 6. 日志与运维
 
-### 5. 环境变量（可选）
-
-| 变量 | 默认值 | 说明 |
-|---|---|---|
-| ITOPS_DB_HOST / ITOPS_DB_PORT | localhost / 3306 | 数据库地址 |
-| ITOPS_DB_USER / ITOPS_DB_PASSWORD | root / 123456 | 数据库账号 |
-| ITOPS_JWT_SECRET | （内置开发值） | 生产必改为 64 位以上随机串 |
-| ITOPS_UPLOAD_PATH | ./data/uploads | 上传文件目录 |
-| ITOPS_WEB_URL / ITOPS_H5_URL | http://localhost(/mobile) | Webhook 通知中的跳转链接 |
+- prod 日志：`logs/itops-backend.log`（按天 + 100MB 滚动，保留 30 天）与
+  `logs/itops-backend-error.log`（ERROR 单独归档，保留 90 天）；
+- 建议用 [WinSW](https://github.com/winsw/winsw) 或 NSSM 将 jar 注册为 Windows 服务开机自启；
+- 上传文件（`ITOPS_UPLOAD_PATH`）与数据库需纳入每日备份计划。
 
 ### 数据备份与恢复
 

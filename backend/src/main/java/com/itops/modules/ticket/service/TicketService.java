@@ -539,7 +539,7 @@ public class TicketService extends ServiceImpl<TicketMapper, Ticket> {
                 return no;
             }
         }
-        throw BusinessException.of("工单编号生成失败，请重试");
+        throw BusinessException.server("工单编号生成失败，请重试");
     }
 
     private String firstNonBlank(String a, String b) {

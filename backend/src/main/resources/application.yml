@@ -6,6 +6,16 @@ server:
       force: true
   tomcat:
     uri-encoding: UTF-8
+    threads:
+      max: 200
+      min-spare: 10
+    max-connections: 8192
+    connection-timeout: 20000
+  # 响应压缩(文本类接口/静态资源)
+  compression:
+    enabled: true
+    mime-types: application/json,application/xml,text/html,text/xml,text/plain,text/css,application/javascript,image/svg+xml
+    min-response-size: 1024
 
 spring:
   profiles:
@@ -20,6 +30,18 @@ spring:
     multipart:
       max-file-size: 20MB
       max-request-size: 100MB
+      # 大文件写入磁盘临时目录的阈值
+      file-size-threshold: 2MB
+  # 数据库连接池(Hikari) 通用配置, 各 profile 可覆盖
+  datasource:
+    hikari:
+      pool-name: ItopsHikariPool
+      minimum-idle: 5
+      maximum-pool-size: 20
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+      connection-test-query: SELECT 1
 
 mybatis-plus:
   mapper-locations: classpath*:mapper/**/*.xml
@@ -27,7 +49,6 @@ mybatis-plus:
   configuration:
     map-underscore-to-camel-case: true
     cache-enabled: false
-    log-impl: org.apache.ibatis.logging.slf4j.Slf4jImpl
   global-config:
     banner: false
     db-config:
@@ -36,31 +57,56 @@ mybatis-plus:
       logic-delete-value: 1
       logic-not-delete-value: 0
 
+# Actuator 健康检查: 只暴露 health/info, 不泄露环境变量与依赖细节
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: when-authorized
+      probes:
+        enabled: true
+  info:
+    env:
+      enabled: false
+
 # 业务自定义配置
 itops:
   jwt:
-    # HS512 密钥(生产环境请通过环境变量 ITOPS_JWT_SECRET 覆盖)
-    secret: itops-internal-workorder-jwt-secret-key-2026-must-be-long-enough-0123456789
+    # HS512 密钥必须通过环境变量 ITOPS_JWT_SECRET 注入(至少 64 字节);
+    # dev profile 内置开发密钥, prod profile 缺失或使用开发默认值将拒绝启动
+    secret: ${ITOPS_JWT_SECRET:}
     # 令牌有效期(分钟) 默认 12 小时
-    expire-minutes: 720
+    expire-minutes: ${ITOPS_JWT_EXPIRE_MINUTES:720}
   upload:
-    # 存储根目录(容器内 /data/uploads)
+    # 存储根目录
     path: ${ITOPS_UPLOAD_PATH:./data/uploads}
     # 对外访问前缀
     url-prefix: /uploads
     max-size-mb: 10
     allowed-types: jpg,jpeg,png,gif,webp,bmp,pdf,doc,docx,xls,xlsx
   report:
-    # PDF 中文字体路径(docker 镜像内为 Noto Sans CJK)
+    # PDF 中文字体路径
     font-path: ${ITOPS_FONT_PATH:/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc}
-    web-url: ${ITOPS_WEB_URL:http://localhost:8088}
-    h5-url: ${ITOPS_H5_URL:http://localhost:8088/h5}
+    web-url: ${ITOPS_WEB_URL:http://localhost}
+    h5-url: ${ITOPS_H5_URL:http://localhost/mobile}
+  # CORS 允许来源, 逗号分隔; 留空表示不设置跨域头(同源经 Nginx 反代时推荐);
+  # dev profile 默认 "*"
+  cors:
+    allowed-origins: ${ITOPS_CORS_ORIGINS:}
+  # 登录防爆破: 同一 IP+账号连续失败次数阈值与锁定时长(分钟)
+  security:
+    login-max-fail: ${ITOPS_LOGIN_MAX_FAIL:5}
+    login-lock-minutes: ${ITOPS_LOGIN_LOCK_MINUTES:10}
 
-# 接口文档
-knife4j:
-  enable: true
-  setting:
-    language: zh_cn
+logging:
+  level:
+    com.itops: info
+    org.springframework.security: warn
+
 springdoc:
   swagger-ui:
     path: /swagger-ui.html
@@ -71,8 +117,3 @@ springdoc:
     - group: default
       paths-to-match: /api/**
       packages-to-scan: com.itops.modules
-
-logging:
-  level:
-    com.itops: info
-    org.springframework.security: info

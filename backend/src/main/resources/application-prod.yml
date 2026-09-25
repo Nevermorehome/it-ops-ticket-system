@@ -1,0 +1,70 @@
+# ============================================================
+# 生产环境 —— 所有敏感项必须由环境变量注入, 本文件不含任何默认密码/密钥
+# 启动: java -jar itops-backend.jar --spring.profiles.active=prod
+# 必需环境变量:
+#   ITOPS_DB_HOST / ITOPS_DB_PORT / ITOPS_DB_USER / ITOPS_DB_PASSWORD
+#   ITOPS_JWT_SECRET  (>=64 字节随机串, 禁止使用开发默认值)
+# 可选环境变量:
+#   ITOPS_UPLOAD_PATH / ITOPS_CORS_ORIGINS / ITOPS_WEB_URL / ITOPS_H5_URL
+#   ITOPS_FONT_PATH / ITOPS_JWT_EXPIRE_MINUTES / ITOPS_LOGIN_MAX_FAIL ...
+# ============================================================
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://${ITOPS_DB_HOST}:${ITOPS_DB_PORT:3306}/${ITOPS_DB_NAME:itops}?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=true&requireSSL=true&verifyServerCertificate=false
+    username: ${ITOPS_DB_USER}
+    password: ${ITOPS_DB_PASSWORD}
+    hikari:
+      minimum-idle: 5
+      maximum-pool-size: ${ITOPS_DB_POOL_MAX:20}
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+      leak-detection-threshold: 60000
+
+server:
+  # 出错时不暴露框架版本
+  error:
+    include-stacktrace: never
+    include-message: never
+    include-binding-errors: never
+
+mybatis-plus:
+  configuration:
+    log-impl: org.apache.ibatis.logging.nologging.NoLoggingImpl
+
+itops:
+  jwt:
+    # 无默认值: 未配置环境变量时 JwtUtils 将直接拒绝启动
+    secret: ${ITOPS_JWT_SECRET}
+    expire-minutes: ${ITOPS_JWT_EXPIRE_MINUTES:720}
+  upload:
+    path: ${ITOPS_UPLOAD_PATH:/data/uploads}
+  cors:
+    # 生产默认不设置跨域头(前后端同域经 Nginx 反代);
+    # 如前端独立域名部署, 设置 ITOPS_CORS_ORIGINS=https://ops.example.com
+    allowed-origins: ${ITOPS_CORS_ORIGINS:}
+  report:
+    font-path: ${ITOPS_FONT_PATH:/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc}
+    web-url: ${ITOPS_WEB_URL:}
+    h5-url: ${ITOPS_H5_URL:}
+
+# 生产环境关闭接口文档
+knife4j:
+  enable: false
+  production: true
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
+
+management:
+  endpoint:
+    health:
+      show-details: when-authorized
+
+logging:
+  level:
+    com.itops: info
+    org.springframework.security: warn

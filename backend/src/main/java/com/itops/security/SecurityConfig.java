@@ -6,6 +6,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -19,6 +20,9 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * Spring Security 配置
@@ -29,32 +33,46 @@ import java.nio.charset.StandardCharsets;
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final Environment environment;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    /** 匿名访问白名单 */
-    private static final String[] WHITELIST = {
+    /** 始终放行的路径 */
+    private static final String[] BASE_WHITELIST = {
             "/api/auth/login",
             "/api/auth/captcha/**",
             "/uploads/**",
+            "/favicon.ico",
+            "/error",
+            "/actuator/health",
+            "/actuator/health/**",
+            "/actuator/info"
+    };
+
+    /** 接口文档相关路径, 仅非生产环境放行 */
+    private static final String[] DOC_WHITELIST = {
             "/doc.html",
             "/doc.html/**",
             "/webjars/**",
             "/v3/api-docs/**",
             "/swagger-ui/**",
-            "/swagger-resources/**",
-            "/favicon.ico",
-            "/error"
+            "/swagger-resources/**"
     };
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        boolean prod = Arrays.asList(environment.getActiveProfiles()).contains("prod");
+        List<String> whitelist = new ArrayList<>(Arrays.asList(BASE_WHITELIST));
+        if (!prod) {
+            whitelist.addAll(Arrays.asList(DOC_WHITELIST));
+        }
+
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> {
                 })
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(WHITELIST).permitAll()
+                        .requestMatchers(whitelist.toArray(new String[0])).permitAll()
                         .anyRequest().authenticated())
                 .exceptionHandling(eh -> eh
                         .authenticationEntryPoint((request, response, ex) ->
