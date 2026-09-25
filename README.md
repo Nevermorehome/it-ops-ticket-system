@@ -180,6 +180,7 @@ $b = New-Object byte[] 64
 | ITOPS_DB_PORT / ITOPS_DB_NAME | 3306 / itops | 端口与库名 |
 | ITOPS_DB_USER / ITOPS_DB_PASSWORD | ✅ | 数据库账号密码（prod 无默认值） |
 | ITOPS_DB_POOL_MAX | 20 | Hikari 最大连接数 |
+| ITOPS_DB_USE_SSL | false | 数据库连接是否走 SSL（跨机/公网链路设 true） |
 | ITOPS_JWT_SECRET | ✅ | ≥64 字节随机串，禁止使用开发默认值 |
 | ITOPS_JWT_EXPIRE_MINUTES | 720 | 令牌有效期（分钟） |
 | ITOPS_UPLOAD_PATH | /data/uploads | 上传文件存储目录（需可写、定期备份） |

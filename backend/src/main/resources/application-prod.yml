@@ -11,7 +11,8 @@
 spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://${ITOPS_DB_HOST}:${ITOPS_DB_PORT:3306}/${ITOPS_DB_NAME:itops}?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=true&requireSSL=true&verifyServerCertificate=false
+    # 数据库与应用同机部署时 ITOPS_DB_USE_SSL=false(默认); 跨机/公网链路请设 true
+    url: jdbc:mysql://${ITOPS_DB_HOST}:${ITOPS_DB_PORT:3306}/${ITOPS_DB_NAME:itops}?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=${ITOPS_DB_USE_SSL:false}&allowPublicKeyRetrieval=true
     username: ${ITOPS_DB_USER}
     password: ${ITOPS_DB_PASSWORD}
     hikari:
