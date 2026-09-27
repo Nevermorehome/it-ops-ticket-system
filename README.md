@@ -94,17 +94,51 @@ npm run build:h5    # 产物在 dist/build/h5
 
 > **App 端服务器地址**：App 真机无法使用 localhost，需修改
 > [mobile/src/config/index.ts](mobile/src/config/index.ts) 中 `APP-PLUS` 条件编译分支的
-> `BASE_URL`（占位为 `http://192.168.1.100:8080/api`），改为电脑局域网 IP 或部署后的正式域名。
+> `BASE_URL`（当前已设为 `http://10.101.208.157:8080/api`），换网络或公网部署时改为实际地址。
 
-### 5. 打包 Android APK
+### 5. 打包 Android APK（本机已就绪）
 
-1. 打开 [HBuilderX](https://www.dcloud.io/hbuilderx.html)，「文件 → 导入 → 从本地目录导入」选择 `mobile/` 目录；
-2. 打开 `src/manifest.json`：
-   - 在「基础配置」中点击 **重新获取 DCloud AppID** 并保存；
-   - 「App 模块配置」已勾选 Geolocation / Camera / Gallery；
-   - 「App SDK 配置 → 地图」填入腾讯地图/高德/百度地图 Key（地图选点功能必需），Key 需在对应开放平台申请并绑定包名与 SHA1；
-3. 菜单「发行 → 原生 App-云打包」，选择 Android，使用公共测试证书或自有证书，等待云端打包后下载 APK；
-4. 离线打包/CLI 方式参考 UniApp 官方文档：<https://uniapp.dcloud.net.cn/tutorial/app-base-cli.html>。
+> 本机已完成：HBuilderX 5.26 安装于 `D:\itops\HBuilderX\HBuilderX`；
+> 正式签名证书已生成 `D:\itops\itops-release.keystore`
+> （别名 `itops`，密码 `Itops@2026`，有效期 100 年）；
+> App 端服务器地址 `mobile/src/config/index.ts` 已指向 `http://10.101.208.157:8080/api`。
+> **换网络/换服务器时必须同步修改该 IP**（公网部署改为域名）。
+
+只需两步人工操作（需注册/登录 DCloud 账号，免费）：
+
+1. 打开 HBuilderX，右上角登录 DCloud 账号（没有则免费注册）；
+2. 双击已导入的 `mobile` 项目 → 打开 `src/manifest.json` → 「基础配置」→ 点 **重新获取 DCloud AppID** 并保存（appid 与账号绑定，CLI 无法自动生成）。
+
+之后两种方式出包（二选一）：
+
+- **图形界面**：菜单「发行 → 原生 App-云打包」→ Android → 勾选"使用自有证书"→ 证书文件选
+  `D:\itops\itops-release.keystore`，别名 `itops`，证书/私钥密码 `Itops@2026`，
+  包名填 `com.itops.workorder` → 打包 → 等云端完成后下载 APK；
+- **命令行（推荐，HBuilderX 保持打开状态）**：
+
+  ```powershell
+  D:\itops\HBuilderX\HBuilderX\cli.exe pack --project d:\worklog\mobile `
+    --platform android `
+    --android.packagename com.itops.workorder `
+    --android.androidpacktype 0 `
+    --android.certalias itops `
+    --android.certfile D:\itops\itops-release.keystore `
+    --android.certpassword Itops@2026 `
+    --android.storepassword Itops@2026
+  ```
+
+  打包完成后 APK 输出到 `mobile/unpackage/release/apk/`。
+  查询进度：`cli.exe pack status --project d:\worklog\mobile`。
+
+安装到手机：APK 传到 Android 手机安装；手机需与后端服务器网络互通（局域网 IP 或公网域名）。
+真机调试可先用 HBuilderX「运行 → 运行到手机或模拟器」免打包联调。
+
+其他说明：
+
+- 「App 模块配置」已勾选 Geolocation / Camera / Gallery；
+- 「App SDK 配置 → 地图」如需地图选点，在 `src/manifest.json` 填入腾讯地图/高德/百度
+  Key（开放平台申请并绑定包名与 SHA1；SHA1 用
+  `keytool -list -v -keystore D:\itops\itops-release.keystore -alias itops -storepass Itops@2026` 查看）；
 
 > **消息推送**：如需 APP 离线推送，在 manifest.json「App 模块配置 → Push」中开启
 > UniPush（个推）2.0，并在 DCloud 开发者中心完成厂商通道配置；当前业务通知已通过

@@ -5,7 +5,8 @@
  */
 let BASE_URL = '/api'
 // #ifdef APP-PLUS
-BASE_URL = 'http://192.168.1.100:8080/api'
+// 真机/APK 直连后端: 局域网用电脑 IP, 公网用域名; 端口 8080 为后端服务
+BASE_URL = 'http://10.101.208.157:8080/api'
 // #endif
 
 export { BASE_URL }
