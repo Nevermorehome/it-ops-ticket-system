@@ -1,0 +1,14 @@
+# 构建上下文忽略(加速 docker build)
+# 注意: nginx.conf 不能排除, Dockerfile 需要 COPY 它到镜像
+node_modules/
+dist/
+dist-ssr/
+*.log
+.logs/
+.idea/
+.vscode/
+*.iml
+.git/
+.gitignore
+Dockerfile
+.dockerignore

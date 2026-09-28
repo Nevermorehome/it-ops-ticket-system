@@ -1,14 +1,15 @@
 # ============================================================
-# IT 运维工单系统 - 后端服务编排
+# IT 运维工单系统 - 服务编排
 #   启动: docker compose up -d --build
 #   停止: docker compose down
-#   查看日志: docker compose logs -f backend
-#   重新构建: docker compose build --no-cache backend
+#   查看日志: docker compose logs -f backend admin-web
+#   重新构建: docker compose build --no-cache
 #
 # 说明:
 #   - MySQL 使用宿主机本地数据库(不经容器编排), 容器内通过
 #     host.docker.internal 访问宿主机 3306
-#   - prod profile, 敏感配置从 .env 注入(.env 不入库, 见 .env.example)
+#   - backend: prod profile, 敏感配置从 .env 注入(.env 不入库, 见 .env.example)
+#   - admin-web: nginx 托管 Vite 构建产物, /api /uploads 反代到 backend
 #   - 文件上传持久化到 ./data/uploads; 日志持久化到 ./logs/itops
 # ============================================================
 services:
@@ -51,3 +52,29 @@ services:
       options:
         max-size: "50m"
         max-file: "5"
+
+  admin-web:
+    build:
+      context: ./admin-web
+      dockerfile: Dockerfile
+    image: itops-admin-web:1.0.0
+    container_name: itops-admin-web
+    restart: unless-stopped
+    ports:
+      # 容器内 nginx 80 -> 宿主机 5173(与 dev 模式端口一致, 便于记忆)
+      - "5173:80"
+    depends_on:
+      backend:
+        # 等 backend 健康检查通过再起 admin-web(避免反代 502)
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD","wget","-q","--spider","http://localhost/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    logging:
+      driver: json-file
+      options:
+        max-size: "20m"
+        max-file: "3"

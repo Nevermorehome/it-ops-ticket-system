@@ -1,13 +1,16 @@
-# syntax=docker/dockerfile:1.7
 # ============================================================
 # 多阶段构建: maven 打包 + JRE 21 运行
 #   docker build -t itops-backend:1.0.0 ./backend
 #   或经 docker compose build 自动构建
+# 注意: 本 Dockerfile 依赖 BuildKit(默认启用), 用 --mount=type=cache 加速
 # ============================================================
 
 # ---------- Stage 1: 构建 ----------
 FROM maven:3.9-eclipse-temurin-21 AS builder
 WORKDIR /build
+
+# 配置阿里云 maven 镜像加速(国内构建从 central 下载极慢)
+COPY settings.xml /root/.m2/settings.xml
 
 # 先拷 pom, 利用 BuildKit cache mount 预下依赖(加速增量构建)
 COPY pom.xml .
