@@ -1,8 +1,8 @@
 /**
  * 服务地址配置
- * - H5 走 vite 代理 /api（用户一般无需修改）
- * - App(真机/APK) 直连后端, 首次启动进入"服务器配置"页, 用户输入地址后保存
- *   未配置时使用代码内置默认值（仅作兜底, 部署后应改为实际地址）
+ * - 默认值: H5 走 vite 代理 /api; App 直连 http://10.101.208.157:8080/api; 微信小程序直连 https://itops.jsfqal.cn/api
+ * - 用户可在"服务器配置"页输入地址保存, 保存后所有端均优先使用用户配置
+ *   (H5 端配置绝对地址会触发跨域, 需后端 CORS 放行; dev 模式后端 CORS=*)
  */
 
 /** App 端内置默认地址（仅当用户未配置时使用） */
@@ -11,19 +11,26 @@ const DEFAULT_APP_BASE_URL = 'http://10.101.208.157:8080/api'
 /** H5 端固定走 vite 代理 */
 const DEFAULT_H5_BASE_URL = '/api'
 
+/** 微信小程序端默认地址（必须 HTTPS 公网域名, 且在小程序后台配置为 request 合法域名） */
+const DEFAULT_MP_BASE_URL = 'https://itops.jsfqal.cn/api'
+
 /** 存储用户配置地址的 key */
 const STORAGE_KEY = 'itops_server_url'
 
 /** 获取当前应使用的 BASE_URL：优先用户配置, 其次内置默认 */
 export function getBaseUrl(): string {
+  const saved = uni.getStorageSync(STORAGE_KEY)
+  if (saved) return saved
   // #ifdef H5
   return DEFAULT_H5_BASE_URL
   // #endif
   // #ifdef APP-PLUS
-  const saved = uni.getStorageSync(STORAGE_KEY)
-  return saved || DEFAULT_APP_BASE_URL
+  return DEFAULT_APP_BASE_URL
   // #endif
-  // #ifndef H5 || APP-PLUS
+  // #ifdef MP
+  return DEFAULT_MP_BASE_URL
+  // #endif
+  // #ifndef H5 || APP-PLUS || MP
   return DEFAULT_H5_BASE_URL
   // #endif
 }

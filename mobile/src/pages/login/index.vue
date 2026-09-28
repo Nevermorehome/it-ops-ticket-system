@@ -19,9 +19,7 @@
       <text class="tip">默认账号 admin / admin123</text>
     </view>
 
-    <!-- #ifdef APP-PLUS -->
     <view class="server-entry" @tap="goServer">服务器设置</view>
-    <!-- #endif -->
   </view>
 </template>
 

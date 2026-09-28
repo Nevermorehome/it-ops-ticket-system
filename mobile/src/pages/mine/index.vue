@@ -16,12 +16,10 @@
         <text>修改密码</text>
         <text class="arrow">›</text>
       </view>
-      <!-- #ifdef APP-PLUS -->
       <view class="menu-item" @tap="goServer">
         <text>服务器配置</text>
         <text class="arrow">›</text>
       </view>
-      <!-- #endif -->
       <view class="menu-item" @tap="showAbout">
         <text>关于系统</text>
         <text class="arrow">›</text>

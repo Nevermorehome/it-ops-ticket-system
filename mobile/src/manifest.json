@@ -55,11 +55,21 @@
     },
     "quickapp" : {},
     "mp-weixin" : {
-        "appid" : "",
+        "appid" : "wx9624b6496abf53a6",
         "setting" : {
-            "urlCheck" : false
+            "urlCheck" : false,
+            "es6" : true,
+            "postcss" : true,
+            "minified" : true,
+            "bigPackageSizeSupport" : true
         },
-        "usingComponents" : true
+        "usingComponents" : true,
+        "lazyCodeLoading" : "requiredComponents",
+        "permission" : {
+            "scope.userLocation" : {
+                "desc" : "用于现场记录时获取地理位置水印"
+            }
+        }
     },
     "h5" : {
         "title" : "IT运维工单",

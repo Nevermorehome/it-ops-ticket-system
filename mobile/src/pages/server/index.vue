@@ -6,7 +6,6 @@
       <text class="sub">连接到您的 IT 运维工单后台</text>
     </view>
 
-    <!-- #ifdef APP-PLUS -->
     <view class="form card">
       <view class="item">
         <text class="label">服务器地址</text>
@@ -21,14 +20,6 @@
         <button class="btn-reset" @tap="onReset">恢复默认</button>
       </view>
     </view>
-    <!-- #endif -->
-
-    <!-- #ifdef H5 -->
-    <view class="form card">
-      <view class="h5-tip">H5 端通过浏览器代理访问，无需配置服务器地址。</view>
-      <button class="btn-save" @tap="goLogin">前往登录</button>
-    </view>
-    <!-- #endif -->
   </view>
 </template>
 
@@ -42,9 +33,7 @@ const testing = ref(false)
 const saving = ref(false)
 
 onLoad(() => {
-  // #ifdef APP-PLUS
   url.value = getBaseUrl() || getDefaultAppUrl()
-  // #endif
 })
 
 function validate(): boolean {
@@ -109,10 +98,6 @@ function onReset() {
   url.value = getDefaultAppUrl()
   clearBaseUrl()
   uni.showToast({ title: '已恢复默认地址', icon: 'none' })
-}
-
-function goLogin() {
-  uni.reLaunch({ url: '/pages/login/index' })
 }
 </script>
 
@@ -205,12 +190,5 @@ function goLogin() {
 }
 .btn-reset::after {
   border: none;
-}
-.h5-tip {
-  color: #606266;
-  font-size: 28rpx;
-  line-height: 1.6;
-  margin-bottom: 32rpx;
-  text-align: center;
 }
 </style>
