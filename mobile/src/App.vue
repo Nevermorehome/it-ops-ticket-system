@@ -1,10 +1,18 @@
 <script setup lang="ts">
 import { onLaunch, onShow } from '@dcloudio/uni-app'
 import { useUserStore } from '@/store/user'
+import { hasServerUrl } from '@/config'
 
 onLaunch(() => {
   const userStore = useUserStore()
   if (!userStore.token) {
+    // #ifdef APP-PLUS
+    // App 端首次启动未配置服务器地址时, 进入配置页
+    if (!hasServerUrl()) {
+      uni.reLaunch({ url: '/pages/server/index' })
+      return
+    }
+    // #endif
     uni.reLaunch({ url: '/pages/login/index' })
   }
 })

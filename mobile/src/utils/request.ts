@@ -1,4 +1,4 @@
-import { BASE_URL } from '@/config'
+import { getBaseUrl } from '@/config'
 
 interface RequestOptions {
   url: string
@@ -14,7 +14,7 @@ export function request<T = any>(options: RequestOptions): Promise<T> {
   }
   return new Promise((resolve, reject) => {
     uni.request({
-      url: BASE_URL + options.url,
+      url: getBaseUrl() + options.url,
       method: options.method || 'GET',
       data: options.data || {},
       header: {
@@ -64,7 +64,7 @@ export function uploadFile(filePath: string): Promise<any> {
   const token = uni.getStorageSync('itops_token')
   return new Promise((resolve, reject) => {
     uni.uploadFile({
-      url: BASE_URL + '/file/upload',
+      url: getBaseUrl() + '/file/upload',
       filePath,
       name: 'file',
       header: token ? { Authorization: `Bearer ${token}` } : {},

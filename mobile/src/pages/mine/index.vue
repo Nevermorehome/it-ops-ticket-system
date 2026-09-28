@@ -16,6 +16,12 @@
         <text>修改密码</text>
         <text class="arrow">›</text>
       </view>
+      <!-- #ifdef APP-PLUS -->
+      <view class="menu-item" @tap="goServer">
+        <text>服务器配置</text>
+        <text class="arrow">›</text>
+      </view>
+      <!-- #endif -->
       <view class="menu-item" @tap="showAbout">
         <text>关于系统</text>
         <text class="arrow">›</text>
@@ -78,6 +84,10 @@ function showAbout() {
     content: '信息部内部 IT 运维工单记录系统 v1.0.0\n工单全流程 · 现场留痕 · 消息通知',
     showCancel: false
   })
+}
+
+function goServer() {
+  uni.navigateTo({ url: '/pages/server/index' })
 }
 
 async function submitPwd() {

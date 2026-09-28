@@ -18,6 +18,10 @@
       <button class="submit" :loading="loading" @tap="onSubmit">登 录</button>
       <text class="tip">默认账号 admin / admin123</text>
     </view>
+
+    <!-- #ifdef APP-PLUS -->
+    <view class="server-entry" @tap="goServer">服务器设置</view>
+    <!-- #endif -->
   </view>
 </template>
 
@@ -43,6 +47,10 @@ async function onSubmit() {
   } finally {
     loading.value = false
   }
+}
+
+function goServer() {
+  uni.navigateTo({ url: '/pages/server/index' })
 }
 </script>
 
@@ -109,5 +117,12 @@ async function onSubmit() {
   margin-top: 24rpx;
   color: #c0c4cc;
   font-size: 24rpx;
+}
+.server-entry {
+  margin-top: 40rpx;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 26rpx;
+  text-decoration: underline;
 }
 </style>

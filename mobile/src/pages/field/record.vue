@@ -63,7 +63,7 @@
 import { computed, nextTick, reactive, ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { ticketApi } from '@/api'
-import { BASE_URL } from '@/config'
+import { getBaseUrl } from '@/config'
 import { useUserStore } from '@/store/user'
 
 interface FieldImage {
@@ -257,7 +257,7 @@ async function uploadOne(path: string): Promise<any> {
   return new Promise((resolve, reject) => {
     const token = uni.getStorageSync('itops_token')
     uni.uploadFile({
-      url: BASE_URL + '/file/upload',
+      url: getBaseUrl() + '/file/upload',
       filePath: path,
       name: 'file',
       header: token ? { Authorization: `Bearer ${token}` } : {},

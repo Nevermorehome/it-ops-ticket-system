@@ -89,7 +89,7 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
 import { baseApi, ticketApi } from '@/api'
-import { BASE_URL } from '@/config'
+import { getBaseUrl } from '@/config'
 import { loadDict, type DictItem } from '@/utils/dict'
 
 interface PickedImage {
@@ -190,7 +190,7 @@ function uploadOne(path: string, picked: PickedImage) {
   return new Promise<void>((resolve, reject) => {
     const token = uni.getStorageSync('itops_token')
     const task = uni.uploadFile({
-      url: BASE_URL + '/file/upload',
+      url: getBaseUrl() + '/file/upload',
       filePath: path,
       name: 'file',
       header: token ? { Authorization: `Bearer ${token}` } : {},
