@@ -16,7 +16,6 @@
         <input v-model="form.password" class="input" password placeholder="请输入密码" @confirm="onSubmit" />
       </view>
       <button class="submit" :loading="loading" @tap="onSubmit">登 录</button>
-      <text class="tip">默认账号 admin / admin123</text>
     </view>
 
     <view class="server-entry" @tap="goServer">服务器设置</view>
@@ -108,13 +107,6 @@ function goServer() {
   color: #fff;
   border-radius: 12rpx;
   font-size: 32rpx;
-}
-.tip {
-  display: block;
-  text-align: center;
-  margin-top: 24rpx;
-  color: #c0c4cc;
-  font-size: 24rpx;
 }
 .server-entry {
   margin-top: 40rpx;

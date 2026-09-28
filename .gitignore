@@ -47,3 +47,10 @@ unpackage/
 # ========== 本地部署临时产物 ==========
 deploy/*.tar.gz
 *.sql.bak
+
+# ========== Docker compose 敏感配置 ==========
+# .env 包含真实 DB 密码/JWT 密钥, 严禁入库; 仅提交 .env.example 模板
+.env
+# docker 运行时挂载的持久化目录(不入库)
+data/
+logs/

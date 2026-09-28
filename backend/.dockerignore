@@ -1,0 +1,13 @@
+# 构建上下文忽略列表(加速 docker build, 减小上下文体积)
+target/
+!.mvn/
+*.log
+logs/
+.idea/
+.vscode/
+*.iml
+node_modules/
+dist/
+.git/
+.gitignore
+.mvn/wrapper/maven-wrapper.jar

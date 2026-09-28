@@ -1,0 +1,53 @@
+# ============================================================
+# IT 运维工单系统 - 后端服务编排
+#   启动: docker compose up -d --build
+#   停止: docker compose down
+#   查看日志: docker compose logs -f backend
+#   重新构建: docker compose build --no-cache backend
+#
+# 说明:
+#   - MySQL 使用宿主机本地数据库(不经容器编排), 容器内通过
+#     host.docker.internal 访问宿主机 3306
+#   - prod profile, 敏感配置从 .env 注入(.env 不入库, 见 .env.example)
+#   - 文件上传持久化到 ./data/uploads; 日志持久化到 ./logs/itops
+# ============================================================
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    image: itops-backend:1.0.0
+    container_name: itops-backend
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env
+    environment:
+      # 强制 prod profile(从 .env 注入 DB/JWT/CORS 等)
+      - SPRING_PROFILES_ACTIVE=prod
+      # 走宿主机本地 MySQL: host.docker.internal 在 Docker Desktop 自带;
+      # Linux 服务器无此域名时, 经下方 extra_hosts 兜底解析到宿主机网关
+      - ITOPS_DB_HOST=host.docker.internal
+      - ITOPS_DB_PORT=3306
+      - ITOPS_DB_NAME=itops
+      - ITOPS_DB_USE_SSL=false
+    extra_hosts:
+      # 兼容 Linux 宿主机: host-gateway 自动解析为宿主机 IP
+      - "host.docker.internal:host-gateway"
+    volumes:
+      # 上传文件持久化(对应 application-prod.yml 的 ITOPS_UPLOAD_PATH=/data/uploads)
+      - ./data/uploads:/data/uploads
+      # 日志持久化(logback-spring.xml 输出到 ./logs 与 /app/logs)
+      - ./logs/itops:/app/logs
+    healthcheck:
+      test: ["CMD","wget","-q","--spider","http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "5"
