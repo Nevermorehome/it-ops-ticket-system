@@ -14,10 +14,13 @@
 # ============================================================
 services:
   backend:
+    # image 指向 Docker Hub 仓库; build 保留用于有源码时本地构建(产物打同名 tag)
+    #   Linux 无源码部署: docker compose pull && docker compose up -d
+    #   本地有源码构建:   docker compose up -d --build
+    image: 1193876862/itops-backend:1.0.0
     build:
       context: ./backend
       dockerfile: Dockerfile
-    image: itops-backend:1.0.0
     container_name: itops-backend
     restart: unless-stopped
     ports:
@@ -54,10 +57,11 @@ services:
         max-file: "5"
 
   admin-web:
+    # image 指向 Docker Hub 仓库; build 保留用于有源码时本地构建
+    image: 1193876862/itops-admin-web:1.0.0
     build:
       context: ./admin-web
       dockerfile: Dockerfile
-    image: itops-admin-web:1.0.0
     container_name: itops-admin-web
     restart: unless-stopped
     ports:
