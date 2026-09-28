@@ -9,9 +9,8 @@
     <view class="form card">
       <view class="item">
         <text class="label">服务器地址</text>
-        <input v-model="url" class="input" placeholder="http://ip:port/api" />
+        <input v-model="url" class="input" placeholder="https://itops.jsfqal.cn/api" />
       </view>
-      <view class="hint">示例：http://10.101.208.157:9080/api</view>
       <view class="btns">
         <button class="btn-test" :loading="testing" @tap="onTest">测试连接</button>
         <button class="btn-save" :loading="saving" @tap="onSave">保存并登录</button>
@@ -151,11 +150,6 @@ function onReset() {
 .input {
   flex: 1;
   height: 56rpx;
-}
-.hint {
-  margin-top: 16rpx;
-  color: #909399;
-  font-size: 24rpx;
 }
 .btns {
   display: flex;

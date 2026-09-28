@@ -94,15 +94,15 @@ npm run build:h5    # 产物在 dist/build/h5
 
 > **App 端服务器地址**：App 真机无法使用 localhost，需修改
 > [mobile/src/config/index.ts](mobile/src/config/index.ts) 中 `APP-PLUS` 条件编译分支的
-> `BASE_URL`（当前已设为 `http://10.101.208.157:9080/api`），换网络或公网部署时改为实际地址。
+> `BASE_URL`（当前已设为 `https://itops.jsfqal.cn/api`），换服务器时改为实际地址。
 
 ### 5. 打包 Android APK（本机已就绪）
 
 > 本机已完成：HBuilderX 5.26 安装于 `D:\itops\HBuilderX\HBuilderX`；
 > 正式签名证书已生成 `D:\itops\itops-release.keystore`
 > （别名 `itops`，密码 `Itops@2026`，有效期 100 年）；
-> App 端服务器地址 `mobile/src/config/index.ts` 已指向 `http://10.101.208.157:9080/api`。
-> **换网络/换服务器时必须同步修改该 IP**（公网部署改为域名）。
+> App 端服务器地址 `mobile/src/config/index.ts` 已指向 `https://itops.jsfqal.cn/api`。
+> **换服务器时同步修改该地址**。
 
 只需两步人工操作（需注册/登录 DCloud 账号，免费）：
 
