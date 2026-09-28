@@ -35,10 +35,10 @@ ENV TZ=Asia/Shanghai \
 
 COPY --from=builder /build/app.jar /app/app.jar
 
-EXPOSE 8080
+EXPOSE 9080
 
 # 健康检查(Actuator 已匿名开放 /actuator/health)
 HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=5 \
-    CMD wget -q --spider http://localhost:8080/actuator/health || exit 1
+    CMD wget -q --spider http://localhost:9080/actuator/health || exit 1
 
 ENTRYPOINT ["sh","-c","java $JAVA_OPTS -jar /app/app.jar"]
