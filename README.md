@@ -94,24 +94,15 @@ npm run build:h5    # 产物在 dist/build/h5
 
 > **App 端服务器地址**：App 真机无法使用 localhost，需修改
 > [mobile/src/config/index.ts](mobile/src/config/index.ts) 中 `APP-PLUS` 条件编译分支的
-<<<<<<< HEAD
 > `BASE_URL`（当前已设为 `https://itops.jsfqal.cn/api`），换服务器时改为实际地址。
-=======
-> `BASE_URL`（当前已设为 `http://10.101.208.157:9080/api`），换网络或公网部署时改为实际地址。
->>>>>>> fe6b2df052a0dc6e230cbe2903c1f64c9b5d1282
 
 ### 5. 打包 Android APK（本机已就绪）
 
 > 本机已完成：HBuilderX 5.26 安装于 `D:\itops\HBuilderX\HBuilderX`；
 > 正式签名证书已生成 `D:\itops\itops-release.keystore`
 > （别名 `itops`，密码 `Itops@2026`，有效期 100 年）；
-<<<<<<< HEAD
 > App 端服务器地址 `mobile/src/config/index.ts` 已指向 `https://itops.jsfqal.cn/api`。
 > **换服务器时同步修改该地址**。
-=======
-> App 端服务器地址 `mobile/src/config/index.ts` 已指向 `http://10.101.208.157:9080/api`。
-> **换网络/换服务器时必须同步修改该 IP**（公网部署改为域名）。
->>>>>>> fe6b2df052a0dc6e230cbe2903c1f64c9b5d1282
 
 只需两步人工操作（需注册/登录 DCloud 账号，免费）：
 
@@ -281,7 +272,82 @@ xcopy /E /I backend\data\uploads backup\uploads
 
 ---
 
-## 三、工单状态流转
+## 三、Docker Compose 部署（Linux 服务器，源码构建本地镜像）
+
+镜像仅在本地构建、不上传 Docker Hub，Linux 服务器需 clone 源码后自行构建。
+
+### 1. 环境要求
+
+- Linux（x86_64），已安装 Docker Engine 24+ 与 docker compose 插件；
+- 宿主机本地安装 MySQL 8 并初始化数据库（建表脚本见 [deploy/sql/](deploy/sql/)，账号示例 root）。
+
+### 2. 拉取源码
+
+```bash
+git clone https://github.com/Nevermorehome/it-ops-ticket-system.git
+cd it-ops-ticket-system
+```
+
+### 3. 准备环境变量
+
+```bash
+cp .env.example .env
+vi .env   # 必改：ITOPS_DB_PASSWORD / ITOPS_JWT_SECRET / ITOPS_CORS_ORIGINS
+# JWT 密钥生成：openssl rand -base64 96 | tr -d '\n'
+# CORS 白名单必须包含所有实际访问入口(浏览器带 Origin 头, 缺失会 403)
+```
+
+### 4. 构建本地镜像
+
+方式一：compose 一键构建（按 docker-compose.yml 的 build 配置，产物 tag 与 image 字段一致）：
+
+```bash
+docker compose build
+```
+
+方式二：docker build 分别构建：
+
+```bash
+# 后端镜像（容器内 Maven 编译，已配阿里云镜像源，首次约 3-5 分钟）
+docker build -t 1193876862/itops-backend:1.0.1 ./backend
+
+# 管理后台镜像（容器内 npm build + nginx 托管）
+docker build -t 1193876862/itops-admin-web:1.0.1 ./admin-web
+```
+
+### 5. 启动与验证
+
+```bash
+docker compose up -d
+
+# 验证：健康检查 + 登录
+curl http://localhost:9080/actuator/health        # {"status":"UP"}
+curl -X POST http://localhost:9080/api/auth/login \
+     -H 'Content-Type: application/json' \
+     -d '{"username":"admin","password":"admin123"}'
+
+docker compose ps    # 两容器均应为 healthy
+```
+
+| 入口 | 地址 |
+|---|---|
+| 后端 API | `http://<服务器IP>:9080/api` |
+| Web 管理后台 | `http://<服务器IP>:5173/`（容器内 nginx 反代 `/api`、`/uploads` 到 backend:9080） |
+
+### 6. 日常运维
+
+```bash
+docker compose logs -f backend    # 看后端日志
+docker compose restart backend    # 重启单个服务
+docker compose down               # 停止（数据在宿主机 MySQL 与挂载目录，不受影响）
+
+# 代码更新后重建
+git pull && docker compose up -d --build
+```
+
+---
+
+## 四、工单状态流转
 
 ```
 PENDING 待受理 ──指派──▶ ASSIGNED 已指派 ──受理──▶ PROCESSING 处理中
@@ -295,7 +361,7 @@ PENDING/ASSIGNED ──取消──▶ CANCELLED 已取消
 
 操作按钮按当前状态与权限标识双重控制（前端控制显隐、后端强校验）。
 
-## 四、Webhook 通知配置
+## 五、Webhook 通知配置
 
 在管理后台「消息通知 → Webhook 配置」中新增：
 
