@@ -1,6 +1,10 @@
 /**
  * 服务地址配置
+<<<<<<< HEAD
  * - 默认值: H5 走 vite 代理 /api; App/小程序 直连 https://itops.jsfqal.cn/api
+=======
+ * - 默认值: H5 走 vite 代理 /api; App 直连 http://10.101.208.157:9080/api; 微信小程序直连 https://itops.jsfqal.cn/api
+>>>>>>> fe6b2df052a0dc6e230cbe2903c1f64c9b5d1282
  * - 用户可在"服务器配置"页输入地址保存, 保存后所有端均优先使用用户配置
  *   (H5 端配置绝对地址会触发跨域, 需后端 CORS 放行; dev 模式后端 CORS=*)
  */
